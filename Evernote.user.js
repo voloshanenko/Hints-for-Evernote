@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         evernote_font_change
 // @namespace    http://tampermonkey.net/
-// @version      0.6
+// @version      0.7
 // @description  Evernote.com Date/Greeting replacement, font color change + CtrlQ shortcut for text color change
 // @author       Igor Voloshanenko
 // @match        https://www.evernote.com/client/*
@@ -56,9 +56,17 @@
         simulateMouseClick(colorpicker[0]);
     };
 
+    function onShiftCtrlQ() {
+        var highlight_colorpicker = $("#qa-HIGHLIGHT_TEXT_BTN");
+        waitForKeyElements ("#qa-GREEN_COLOR_LABEL div", ClickElement, true);
+        simulateMouseClick(highlight_colorpicker[0]);
+    };
+
     function onKeydown(evt) {
         // Use https://keycode.info/ to get keys
-        if (evt.ctrlKey && evt.keyCode == 81) {
+        if (evt.shiftKey && evt.ctrlKey && evt.keyCode == 81) {
+            onShiftCtrlQ();
+        }else if(evt.ctrlKey && evt.keyCode == 81){
             onCtrlQ();
         }
     }
