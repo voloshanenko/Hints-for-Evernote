@@ -7,8 +7,8 @@
 // @match        https://www.evernote.com/client/*
 // @icon         https://www.google.com/s2/favicons?domain=evernote.com
 // @homepageURL  https://github.com/voloshanenko/Hints-for-Evernote
-// @update       https://github.com/Amourspirit/Hints-for-Evernote/raw/master/dist/Evernote.user.js
-// @downloadURL  https://github.com/Amourspirit/Hints-for-Evernote/raw/master/dist/Evernote.user.js
+// @update       https://github.com/voloshanenko/Hints-for-Evernote/raw/master/dist/Evernote.user.js
+// @downloadURL  https://github.com/voloshanenko/Hints-for-Evernote/raw/master/dist/Evernote.user.js
 // @grant        none
 // @require      http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
 // @require      https://gist.github.com/raw/2625891/waitForKeyElements.js
