@@ -52,7 +52,7 @@
 
     function onCtrlQ() {
         var colorpicker = $("#qa-FONTCOLOR_DROPDOWN");
-        waitForKeyElements ("#rgb\\(252\\,\\ 18\\,\\ 51\\) div", ClickElement);
+        waitForKeyElements ("#rgb\\(252\\,\\ 18\\,\\ 51\\) div", ClickElement, true);
         simulateMouseClick(colorpicker[0]);
     };
 
