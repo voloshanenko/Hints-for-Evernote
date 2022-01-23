@@ -33,6 +33,7 @@
     }
     if (node) {
       return (node.nodeName == "#text" ? node.parentNode : node);
+      //test
     }
 };
 
