@@ -11,7 +11,7 @@
 // @downloadURL  https://github.com/voloshanenko/Hints-for-Evernote/raw/main/Evernote.user.js
 // @grant        none
 // @require      http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
-// @require      https://gist.github.com/raw/2625891/waitForKeyElements.js
+// @require      https://github.com/voloshanenko/Hints-for-Evernote/raw/main/waitForKeyElements.js
 // @grant        GM_addStyle
 // ==/UserScript==
 
@@ -37,26 +37,24 @@
     }
 };
 
+
+    async function simulateMouseClick(el) {
+        let opts = {view: window, bubbles: true, cancelable: true, buttons: 1};
+        el.dispatchEvent(new MouseEvent("mousedown", opts));
+        await new Promise(r => setTimeout(r, 50));
+        el.dispatchEvent(new MouseEvent("mouseup", opts));
+        el.dispatchEvent(new MouseEvent("click", opts));
+    };
+
+    function ClickElement(jNode){
+        jNode.trigger("click");
+    };
+
     function onCtrlQ() {
-        var selection = $("#qa-COMMON_EDITOR_IFRAME")[0].contentWindow.getSelection();
-        var node = selection.anchorNode
-        var textRange = selection.getRangeAt(0);
-        var contents = textRange.cloneContents();
-
-        if (contents.childNodes.length == 1 && contents.childNodes[0].nodeName == "#text"){
-            var span = document.createElement("span");
-            span.setAttribute('style', '--darkmode-color: rgb(255, 49, 78); --lightmode-color: rgb(252, 18, 51);');
-            span.className = "UrtAp";
-            span.appendChild(contents.childNodes[0]);
-            //textRange.insertNode(span);
-            textRange.deleteContents();
-            textRange.insertNode(span);
-        };
-
-        //<span style="--darkmode-color: rgb(255, 49, 78); --lightmode-color: rgb(252, 18, 51);" class="UrtAp">За прошедшие 15-20 лет</span>
-        //node.parentNode.replaceChild(span, node);
-
-    }
+        var colorpicker = $("#qa-FONTCOLOR_DROPDOWN");
+        waitForKeyElements ("#rgb\\(252\\,\\ 18\\,\\ 51\\) div", ClickElement);
+        simulateMouseClick(colorpicker[0]);
+    };
 
     function onKeydown(evt) {
         // Use https://keycode.info/ to get keys
@@ -65,8 +63,7 @@
         }
     }
 
-    function replaceElementAndChangeFont (jNode) {
-
+    function replaceElementAndChangeFont(jNode) {
         var CurrentDate = $("#qa-HOME_SUBTITLE");
         CurrentDate.css({
                 fontSize: 20,
@@ -76,15 +73,11 @@
         if (jNode) {
             jNode[0].parentNode.replaceChild(CurrentDate[0], jNode[0]);
         }
-
     };
-
-
 
     //ReplaceCurrentDateField
     waitForKeyElements ("#qa-HOME_TITLE", replaceElementAndChangeFont);
     //Add keyboard handler
     document.addEventListener('keydown', onKeydown, true);
-
 
 })();
