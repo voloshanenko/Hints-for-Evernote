@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         evernote_font_change
 // @namespace    http://tampermonkey.net/
-// @version      0.8
+// @version      0.9
 // @description  Evernote.com Date/Greeting replacement, font color change + CtrlQ shortcut for text color change
 // @author       Igor Voloshanenko
 // @match        https://www.evernote.com/client/*
@@ -18,25 +18,12 @@
 (function() {
     'use strict';
 
-    function getSelectedNode() {
-    var node,selection;
-
-    if (window.getSelection) {
-      selection = getSelection();
-      node = selection.anchorNode;
-    }
-    if (!node && document.selection) {
-        selection = document.selection
-        var range = selection.getRangeAt ? selection.getRangeAt(0) : selection.createRange();
-        node = range.commonAncestorContainer ? range.commonAncestorContainer :
-               range.parentElement ? range.parentElement() : range.item(0);
-    }
-    if (node) {
-      return (node.nodeName == "#text" ? node.parentNode : node);
-      //test
-    }
-};
-
+    function getSelectedTextEndPosition() {
+        var selection = $("#qa-COMMON_EDITOR_IFRAME")[0].contentWindow.getSelection();
+        var range = selection.getRangeAt(0);
+        var rects = range.getClientRects()
+        return rects[rects.length - 1];
+    };
 
     async function simulateMouseClick(el) {
         let opts = {view: window, bubbles: true, cancelable: true, buttons: 1};
@@ -50,6 +37,14 @@
         jNode.trigger("click");
     };
 
+    function MoveElement(jNode){
+        var node_width = jNode.outerWidth();
+        var textPos = getSelectedTextEndPosition();
+        var newTop = textPos.top + textPos.height*0.75
+        var newLeft = textPos.left - node_width*2 + textPos.width/2 + 7.5
+        jNode.css({ "position": "relative", "top": newTop, "left": newLeft });
+    }
+
     function onCtrlQ() {
         var colorpicker = $("#qa-FONTCOLOR_DROPDOWN");
         waitForKeyElements ("#rgb\\(252\\,\\ 18\\,\\ 51\\) > div", ClickElement, true);
@@ -62,10 +57,18 @@
         simulateMouseClick(highlight_colorpicker[0]);
     };
 
+    function onShiftCtrlW() {
+        var highlight_colorpicker = $("#qa-HIGHLIGHT_LABEL > div > svg");
+        simulateMouseClick(highlight_colorpicker[0]);
+        waitForKeyElements ("#qa-ACTIONS_MODAL", MoveElement, true);
+    };
+
     function onKeydown(evt) {
         // Use https://keycode.info/ to get keys
         if (evt.shiftKey && evt.ctrlKey && evt.keyCode == 81) {
             onShiftCtrlQ();
+        }else if (evt.shiftKey && evt.ctrlKey && evt.keyCode == 87) {
+            onShiftCtrlW();
         }else if(evt.ctrlKey && evt.keyCode == 81){
             onCtrlQ();
         }
