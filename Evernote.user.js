@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         evernote_font_change
 // @namespace    http://tampermonkey.net/
-// @version      0.9
+// @version      0.10
 // @description  Evernote.com Date/Greeting replacement, font color change + CtrlQ shortcut for text color change
 // @author       Igor Voloshanenko
 // @match        https://www.evernote.com/client/*
@@ -41,7 +41,7 @@
         var node_width = jNode.outerWidth();
         var textPos = getSelectedTextEndPosition();
         var newTop = textPos.top + textPos.height*0.75
-        var newLeft = textPos.left - node_width*2 + textPos.width/2 + 7.5
+        var newLeft = textPos.left - node_width*2 + textPos.width/2 + textPos.width/4 + textPos.width/8
         jNode.css({ "position": "relative", "top": newTop, "left": newLeft });
     }
 
@@ -51,13 +51,13 @@
         simulateMouseClick(colorpicker[0]);
     };
 
-    function onShiftCtrlQ() {
+    function onCtrlShiftQ() {
         var highlight_colorpicker = $("#qa-HIGHLIGHT_LABEL > div > svg");
         waitForKeyElements ("#qa-GREEN_COLOR_LABEL > div", ClickElement, true);
         simulateMouseClick(highlight_colorpicker[0]);
     };
 
-    function onShiftCtrlW() {
+    function onCtrlShiftE() {
         var highlight_colorpicker = $("#qa-HIGHLIGHT_LABEL > div > svg");
         simulateMouseClick(highlight_colorpicker[0]);
         waitForKeyElements ("#qa-ACTIONS_MODAL", MoveElement, true);
@@ -65,10 +65,10 @@
 
     function onKeydown(evt) {
         // Use https://keycode.info/ to get keys
-        if (evt.shiftKey && evt.ctrlKey && evt.keyCode == 81) {
-            onShiftCtrlQ();
-        }else if (evt.shiftKey && evt.ctrlKey && evt.keyCode == 87) {
-            onShiftCtrlW();
+        if (evt.ctrlKey && evt.shiftKey && evt.keyCode == 81) {
+            onCtrlShiftQ();
+        }else if (evt.ctrlKey && evt.shiftKey && evt.keyCode == 69) {
+            onCtrlShiftE();
         }else if(evt.ctrlKey && evt.keyCode == 81){
             onCtrlQ();
         }
