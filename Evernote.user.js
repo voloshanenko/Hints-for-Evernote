@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         evernote_font_change
 // @namespace    http://tampermonkey.net/
-// @version      0.11
+// @version      0.12
 // @description  Evernote.com Date/Greeting replacement, font color change + CtrlQ shortcut for text color change
 // @author       Igor Voloshanenko
 // @match        https://www.evernote.com/client/*
@@ -24,7 +24,7 @@
         var dx = pos1.offsetLeft - pos2.offsetLeft;
         var dy = pos1.offsetTop - pos2.offsetTop;
         return {x:dx, y:dy};
-    }
+    };
 
     function getRelativePos(obj){
         var pos = {offsetLeft:0,offsetTop:0};
@@ -36,18 +36,17 @@
         return pos;
     };
 
-    function getTextPosition() {
+    function getTextPosition(iframe) {
         var selection, range, rects;
-        selection = $("#qa-COMMON_EDITOR_IFRAME")[0].contentWindow.getSelection();
+        selection = iframe[0].contentWindow.getSelection();
         range = selection.getRangeAt(0);
         rects = range.getClientRects()
         return rects[rects.length - 1];
     };
 
-     function getEditorPosition() {
-        var editor_iframe, editor_elem, position;
-        editor_iframe = $("#qa-COMMON_EDITOR_IFRAME")[0].contentWindow;
-        editor_elem = editor_iframe.document.querySelector("#en-note");
+    function getEditorViewPosition(iframe) {
+        var editor_elem, position;
+        editor_elem = iframe[0].contentWindow.document.querySelector("#en-note");
         position = editor_elem.getBoundingClientRect();
         return position;
     };
@@ -65,32 +64,32 @@
     };
 
     function MoveElement(jNode){
-        var node_width, editor_iframe, editor_elem, distance,
+        var nodeWidth, editorIframe, distance,
             textPosition, editorPosition;
 
-        editor_iframe = $("#qa-COMMON_EDITOR_IFRAME")[0].contentWindow;
-        editor_elem = editor_iframe.document.querySelector("#en-note");
-        distance = getDistance(jNode[0], editor_elem);
+        editorIframe = $("#qa-COMMON_EDITOR_IFRAME")
+        distance = getDistance(jNode[0], editorIframe[0]);
 
-        node_width = jNode.outerWidth();
-        textPosition = getTextPosition();
-        editorPosition = getEditorPosition();
+        nodeWidth = jNode.outerWidth();
+        textPosition = getTextPosition(editorIframe);
+        editorPosition = getEditorViewPosition(editorIframe);
 
         var needCorrection, leftCorrection, topCorrection, newLeft, newTop
         // Check if new element poisition still inside editor border
-        needCorrection = editorPosition.right - textPosition.right - node_width;
-        leftCorrection = needCorrection > 0 ? 0: needCorrection;
+        needCorrection = editorPosition.right - textPosition.right - nodeWidth*1.125;
+        leftCorrection = needCorrection > 0 ? 5: needCorrection;
         topCorrection = needCorrection > 0 ? textPosition.height*0.75 : textPosition.height*1.25
-        newLeft = textPosition.right - distance.x/2 + 10 + leftCorrection;
+
+        newLeft = textPosition.right - distance.x + leftCorrection;
         newTop = textPosition.top + topCorrection
 
         jNode.css({ "position": "relative",
-                    "top": newTop,
-                    "left": newLeft
+                   "top": newTop,
+                   "left": newLeft
                   });
-    }
+    };
 
-    function textChangeColorSpecific() {
+    function textColorSpecific() {
         var colorpicker = $("#qa-FONTCOLOR_DROPDOWN");
         waitForKeyElements ("#rgb\\(252\\,\\ 18\\,\\ 51\\) > div", ClickElement, true);
         simulateMouseClick(colorpicker[0]);
@@ -102,10 +101,16 @@
         simulateMouseClick(highlight_colorpicker[0]);
     };
 
+    function textColorPicker() {
+        var colorpicker = $("#qa-FONTCOLOR_DROPDOWN");
+        waitForKeyElements ("#qa-ACTIONS_MODAL", MoveElement, true);
+        simulateMouseClick(colorpicker[0]);
+    };
+
     function textHighlightPicker() {
         var highlight_colorpicker = $("#qa-HIGHLIGHT_LABEL > div > svg");
-        simulateMouseClick(highlight_colorpicker[0]);
         waitForKeyElements ("#qa-ACTIONS_MODAL", MoveElement, true);
+        simulateMouseClick(highlight_colorpicker[0]);
     };
 
     function onKeydown(evt) {
@@ -115,34 +120,33 @@
         if (os == "MacOS"){
             if (evt.ctrlKey && evt.shiftKey && evt.keyCode == 81) {
                 // Ctrl + Shift + Q
-                textHighlightSpecific();
+                textColorPicker();
             }else if (evt.ctrlKey && evt.shiftKey && evt.keyCode == 87) {
                 // Ctrl + shift + W
                 textHighlightPicker();
             }else if(evt.ctrlKey && evt.keyCode == 81){
                 // Ctrl + Q
-                textChangeColorSpecific();
+                textColorSpecific();
             }
         }else if (os === "Windows"){
             if (evt.ctrlKey && evt.shiftKey && evt.keyCode == 81) {
                 // Ctrl + Shift + Q
-                textHighlightSpecific();
+                textColorPicker();
             }else if (evt.ctrlKey && evt.shiftKey && evt.keyCode == 69) {
                 // Ctrl + Shift + E
                 textHighlightPicker();
             }else if(evt.ctrlKey && evt.keyCode == 81){
                 // Ctrl + Q
-                textChangeColorSpecific();
+                textColorSpecific();
             }
         }
-
-    }
+    };
 
     function replaceElementAndChangeFont(jNode) {
         var CurrentDate = $("#qa-HOME_SUBTITLE");
         CurrentDate.css({
-                fontSize: 20,
-                color: "green"
+            fontSize: 20,
+            color: "green"
         });
 
         if (jNode) {
@@ -157,7 +161,7 @@
         if (navigator.appVersion.indexOf("X11") != -1) os = "UNIX";
         if (navigator.appVersion.indexOf("Linux") != -1) os = "Linux";
         return os;
-    }
+    };
 
     //ReplaceCurrentDateField
     waitForKeyElements ("#qa-HOME_TITLE", replaceElementAndChangeFont);
