@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         evernote_font_change
 // @namespace    http://tampermonkey.net/
-// @version      0.12
+// @version      0.13
 // @description  Evernote.com Date/Greeting replacement, font color change + CtrlQ shortcut for text color change
 // @author       Igor Voloshanenko
 // @match        https://www.evernote.com/client/*
@@ -78,7 +78,7 @@
         // Check if new element poisition still inside editor border
         needCorrection = editorPosition.right - textPosition.right - nodeWidth*1.125;
         leftCorrection = needCorrection > 0 ? 5: needCorrection;
-        topCorrection = needCorrection > 0 ? textPosition.height*0.75 : textPosition.height*1.25
+        topCorrection = textPosition.height*1.25
 
         newLeft = textPosition.right - distance.x + leftCorrection;
         newTop = textPosition.top + topCorrection
