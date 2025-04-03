@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         evernote_font_change
 // @namespace    http://tampermonkey.net/
-// @version      0.13
+// @version      0.14
 // @description  Evernote.com Date/Greeting replacement, font color change + CtrlQ shortcut for text color change
 // @author       Igor Voloshanenko
 // @match        https://www.evernote.com/client/*
@@ -57,15 +57,31 @@
         await new Promise(r => setTimeout(r, 50));
         el.dispatchEvent(new MouseEvent("mouseup", opts));
         el.dispatchEvent(new MouseEvent("click", opts));
+        console.log("MouseClick simulated");
+        console.log(el);
+    };
+
+    function simulateMouseOver(el) {
+        let opts = {view: window, bubbles: true, cancelable: true, buttons: 0};
+        el[0].dispatchEvent(new MouseEvent("mouseover", opts));
+        console.log("MouseOver simulated");
+        console.log(el[0]);
     };
 
     function ClickElement(jNode){
         jNode.trigger("click");
+        console.log("Element Clicked");
+        console.log(jNode[0]);
     };
 
     function MoveElement(jNode){
         var nodeWidth, editorIframe, distance,
             textPosition, editorPosition;
+
+        // process special case for colorPicker and Highlight dialogs from submenu
+        if (jNode.attr('id') == "null_outer" || jNode.attr('id') == "highlight_clear_outer"){
+            jNode = jNode.parent().parent().parent();
+        }
 
         editorIframe = $("#qa-COMMON_EDITOR_IFRAME")
         distance = getDistance(jNode[0], editorIframe[0]);
@@ -87,31 +103,51 @@
                    "top": newTop,
                    "left": newLeft
                   });
+        console.log("Element moved")
+        console.log(jNode[0]);
+
+        var submenu_elements = $("#qa-ACTIONS_MODAL ul");
+        if (submenu_elements.length == 2){
+            console.log("Submenu open, hiding it");
+            submenu_elements.eq(0).css({
+                display: "none",
+                visibility: "hidden"
+            });
+        }
+
     };
 
     function textColorSpecific() {
-        var colorpicker = $("#qa-FONTCOLOR_DROPDOWN");
-        waitForKeyElements ("#rgb\\(252\\,\\ 18\\,\\ 51\\) > div", ClickElement, true);
-        simulateMouseClick(colorpicker[0]);
+        processEvernoteMenuElement("#qa-FONTCOLOR_DROPDOWN", "#rgb\\(252\\,\\ 18\\,\\ 51\\) > div", "#fontcolor > div", "#rgb\\(252\\,\\ 18\\,\\ 51\\) > div", ClickElement);
     };
 
     function textHighlightSpecific() {
-        var highlight_colorpicker = $("#qa-HIGHLIGHT_LABEL > div > svg");
-        waitForKeyElements ("#qa-GREEN_COLOR_LABEL > div", ClickElement, true);
-        simulateMouseClick(highlight_colorpicker[0]);
+        processEvernoteMenuElement("#qa-HIGHLIGHT_LABEL > div > svg", "#qa-GREEN_COLOR_LABEL > div", "#highlight > div", "#qa-GREEN_COLOR_LABEL > div", ClickElement,);
     };
 
     function textColorPicker() {
-        var colorpicker = $("#qa-FONTCOLOR_DROPDOWN");
-        waitForKeyElements ("#qa-ACTIONS_MODAL", MoveElement, true);
-        simulateMouseClick(colorpicker[0]);
+        processEvernoteMenuElement("#qa-FONTCOLOR_DROPDOWN", "#qa-ACTIONS_MODAL", "#fontcolor > div", "#qa-ACTIONS_MODAL ul#default_dropdown_id > div#null_outer", MoveElement);
     };
 
     function textHighlightPicker() {
-        var highlight_colorpicker = $("#qa-HIGHLIGHT_LABEL > div > svg");
-        waitForKeyElements ("#qa-ACTIONS_MODAL", MoveElement, true);
-        simulateMouseClick(highlight_colorpicker[0]);
+        processEvernoteMenuElement("#qa-HIGHLIGHT_LABEL > div > svg", "#qa-ACTIONS_MODAL", "#highlight > div", "#qa-ACTIONS_MODAL ul#default_dropdown_id > div#highlight_clear_outer", MoveElement);
     };
+
+    function processEvernoteMenuElement(element_identifier, wait_for_identifier, submenu_identifier, submenu_wait_for_identifier, wait_for_action) {
+        const overflow_button_identifier = "#qa-OVERFLOW_BTN > div > div";
+        var element = $(element_identifier);
+
+        if (typeof element[0] == "undefined") {
+            console.log("Element not available, clicking '" + overflow_button_identifier + "' button");
+            var moreSubmenuElement = $(overflow_button_identifier);
+            simulateMouseClick(moreSubmenuElement[0]);
+            waitForKeyElements(submenu_identifier, simulateMouseOver, true);
+            waitForKeyElements(submenu_wait_for_identifier, wait_for_action, true);
+        } else {
+            simulateMouseClick(element[0]);
+            waitForKeyElements(wait_for_identifier, wait_for_action, true);
+        }
+    }
 
     function onKeydown(evt) {
         //detect OS
