@@ -112,7 +112,7 @@
         needCorrection = editorPosition.right - textPosition.right - nodeWidth*1.125;
         leftCorrection = needCorrection > 0 ? 5: needCorrection;
         if (leftSubmenuCorrection){
-            topCorrection = textPosition
+            topCorrection = textPosition.height
         } else {
             topCorrection = textPosition.height*1.25
         }
