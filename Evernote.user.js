@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         evernote_font_change
 // @namespace    http://tampermonkey.net/
-// @version      0.14
+// @version      0.15
 // @description  Evernote.com Date/Greeting replacement, font color change + CtrlQ shortcut for text color change
 // @author       Igor Voloshanenko
 // @match        https://www.evernote.com/client/*
