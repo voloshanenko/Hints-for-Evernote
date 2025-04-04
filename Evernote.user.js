@@ -1,13 +1,13 @@
 // ==UserScript==
 // @name         evernote_font_change
 // @namespace    http://tampermonkey.net/
-// @version      0.15
+// @version      0.16
 // @description  Evernote.com Date/Greeting replacement, font color change + CtrlQ shortcut for text color change
 // @author       Igor Voloshanenko
 // @match        https://www.evernote.com/client/*
 // @icon         https://www.google.com/s2/favicons?domain=evernote.com
 // @homepageURL  https://github.com/voloshanenko/Hints-for-Evernote
-// @update       https://github.com/voloshanenko/Hints-for-Evernote/raw/main/Evernote.user.js
+// @updateURL    https://github.com/voloshanenko/Hints-for-Evernote/raw/main/Evernote.user.js
 // @downloadURL  https://github.com/voloshanenko/Hints-for-Evernote/raw/main/Evernote.user.js
 // @grant        none
 // @require      http://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js
@@ -18,11 +18,17 @@
 (function() {
     'use strict';
 
-    function getDistance(obj1, obj2){
+    function getDistance(obj1, obj2, ignoreObj1){
         var pos1 = getRelativePos(obj1);
         var pos2 = getRelativePos(obj2);
-        var dx = pos1.offsetLeft - pos2.offsetLeft;
-        var dy = pos1.offsetTop - pos2.offsetTop;
+        var dx, dy
+        if (ignoreObj1){
+            dx = -pos2.offsetLeft;
+            dy = -pos2.offsetTop;
+        } else {
+            dx = pos1.offsetLeft - pos2.offsetLeft;
+            dy = pos1.offsetTop - pos2.offsetTop;
+        }
         return {x:dx, y:dy};
     };
 
@@ -57,34 +63,45 @@
         await new Promise(r => setTimeout(r, 50));
         el.dispatchEvent(new MouseEvent("mouseup", opts));
         el.dispatchEvent(new MouseEvent("click", opts));
-        console.log("MouseClick simulated");
-        console.log(el);
+        if (verbose){
+            console.log("MouseClick simulated");
+            console.log(el);
+        }
     };
 
     function simulateMouseOver(el) {
         let opts = {view: window, bubbles: true, cancelable: true, buttons: 0};
         el[0].dispatchEvent(new MouseEvent("mouseover", opts));
-        console.log("MouseOver simulated");
-        console.log(el[0]);
+        if (verbose){
+            console.log("MouseOver simulated");
+            console.log(el[0]);
+        }
     };
 
     function ClickElement(jNode){
         jNode.trigger("click");
-        console.log("Element Clicked");
-        console.log(jNode[0]);
+        if (verbose){
+            console.log("Element Clicked");
+            console.log(jNode[0]);
+        }
     };
 
     function MoveElement(jNode){
         var nodeWidth, editorIframe, distance,
             textPosition, editorPosition;
 
+        var leftSubmenuCorrection = false;
         // process special case for colorPicker and Highlight dialogs from submenu
         if (jNode.attr('id') == "null_outer" || jNode.attr('id') == "highlight_clear_outer"){
+            if (verbose){
+                console.log("Special element ID detected: '" + jNode.attr('id') + "'")
+            }
             jNode = jNode.parent().parent().parent();
+            leftSubmenuCorrection = true
         }
 
         editorIframe = $("#qa-COMMON_EDITOR_IFRAME")
-        distance = getDistance(jNode[0], editorIframe[0]);
+        distance = getDistance(jNode[0], editorIframe[0], leftSubmenuCorrection);
 
         nodeWidth = jNode.outerWidth();
         textPosition = getTextPosition(editorIframe);
@@ -94,21 +111,30 @@
         // Check if new element poisition still inside editor border
         needCorrection = editorPosition.right - textPosition.right - nodeWidth*1.125;
         leftCorrection = needCorrection > 0 ? 5: needCorrection;
-        topCorrection = textPosition.height*1.25
+        if (leftSubmenuCorrection){
+            topCorrection = textPosition
+        } else {
+            topCorrection = textPosition.height*1.25
+        }
 
         newLeft = textPosition.right - distance.x + leftCorrection;
-        newTop = textPosition.top + topCorrection
+        newTop = textPosition.top - distance.y + topCorrection
 
         jNode.css({ "position": "relative",
                    "top": newTop,
                    "left": newLeft
                   });
-        console.log("Element moved")
-        console.log(jNode[0]);
+
+        if (verbose){
+            console.log("Element moved")
+            console.log(jNode[0]);
+        }
 
         var submenu_elements = $("#qa-ACTIONS_MODAL ul");
         if (submenu_elements.length == 2){
-            console.log("Submenu open, hiding it");
+            if (verbose){
+                console.log("Submenu open, hiding it");
+            }
             submenu_elements.eq(0).css({
                 display: "none",
                 visibility: "hidden"
@@ -133,12 +159,24 @@
         processEvernoteMenuElement("#qa-HIGHLIGHT_LABEL > div > svg", "#qa-ACTIONS_MODAL", "#highlight > div", "#qa-ACTIONS_MODAL ul#default_dropdown_id > div#highlight_clear_outer", MoveElement);
     };
 
+    function overflowSubmenu(){
+        var submenuExist = $("#qa-ACTIONS_MODAL > div > ul#default_dropdown_id");
+        if (submenuExist.length == 0){
+            const overflow_button_identifier = "#qa-OVERFLOW_BTN > div > div";
+            var moreSubmenuElement = $(overflow_button_identifier);
+            waitForKeyElements("#qa-ACTIONS_MODAL", MoveElement, true);
+            simulateMouseClick(moreSubmenuElement[0]);
+        }
+    }
+
     function processEvernoteMenuElement(element_identifier, wait_for_identifier, submenu_identifier, submenu_wait_for_identifier, wait_for_action) {
         const overflow_button_identifier = "#qa-OVERFLOW_BTN > div > div";
         var element = $(element_identifier);
 
         if (typeof element[0] == "undefined") {
-            console.log("Element not available, clicking '" + overflow_button_identifier + "' button");
+            if (verbose){
+                console.log("Element not available, clicking '" + overflow_button_identifier + "' button");
+            }
             var moreSubmenuElement = $(overflow_button_identifier);
             simulateMouseClick(moreSubmenuElement[0]);
             waitForKeyElements(submenu_identifier, simulateMouseOver, true);
@@ -163,6 +201,9 @@
             }else if(evt.ctrlKey && evt.keyCode == 81){
                 // Ctrl + Q
                 textColorSpecific();
+            }else if(evt.ctrlKey && evt.keyCode == 82){
+                // Ctrl + Shift + R
+                overflowSubmenu();
             }
         }else if (os === "Windows"){
             if (evt.ctrlKey && evt.shiftKey && evt.keyCode == 81) {
@@ -174,6 +215,9 @@
             }else if(evt.ctrlKey && evt.keyCode == 81){
                 // Ctrl + Q
                 textColorSpecific();
+            }else if(evt.ctrlKey && evt.keyCode == 82){
+                // Ctrl + Shift + R
+                overflowSubmenu();
             }
         }
     };
@@ -199,6 +243,7 @@
         return os;
     };
 
+    const verbose = true
     //ReplaceCurrentDateField
     waitForKeyElements ("#qa-HOME_TITLE", replaceElementAndChangeFont);
     //Add keyboard handler
