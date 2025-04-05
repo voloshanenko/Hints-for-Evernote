@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         evernote_font_change
 // @namespace    http://tampermonkey.net/
-// @version      0.19
-// @description  Evernote.com Date/Greeting replacement, font color change + CtrlQ shortcut for text color change
+// @version      0.20
+// @description  Evernote.com Date/Greeting replacement, font color change + keyboard shortcuts with improved error handling
 // @author       Igor Voloshanenko
 // @match        https://www.evernote.com/client/*
 // @icon         https://www.google.com/s2/favicons?domain=evernote.com
@@ -25,7 +25,7 @@
         }
     };
 
-    // Calculate the distance between two elements
+    // Calculate the distance between two elements.
     const getDistance = (obj1, obj2, ignoreObj1 = false) => {
         const pos1 = getRelativePos(obj1);
         const pos2 = getRelativePos(obj2);
@@ -34,7 +34,7 @@
         return { x: dx, y: dy };
     };
 
-    // Calculate relative position of an element
+    // Calculate relative position of an element.
     const getRelativePos = (obj) => {
         let pos = { offsetLeft: 0, offsetTop: 0 };
         while (obj) {
@@ -45,7 +45,7 @@
         return pos;
     };
 
-    // Get the last rectangle from the current selection in the editor iframe
+    // Get the last rectangle from the current selection in the editor iframe.
     const getTextPosition = (iframe) => {
         const selection = iframe[0].contentWindow.getSelection();
         const range = selection.getRangeAt(0);
@@ -53,15 +53,20 @@
         return rects[rects.length - 1];
     };
 
-    // Get the bounding rectangle of the editor view element
+    // Get the bounding rectangle of the editor view element.
     const getEditorViewPosition = (iframe) => {
         const editorElem = iframe[0].contentWindow.document.querySelector("#en-note");
         return editorElem.getBoundingClientRect();
     };
 
-    // Simulate a mouse click on an element
+    // Simulate a mouse click on an element.
     const simulateMouseClick = async (el) => {
-        const opts = { view: window, bubbles: true, cancelable: true, buttons: 1 };
+        if (!el) {
+            console.error("simulateMouseClick: element is null or undefined");
+            return;
+        }
+        // Use document.defaultView to ensure a valid Window object.
+        const opts = { view: document.defaultView, bubbles: true, cancelable: true, buttons: 1 };
         el.dispatchEvent(new MouseEvent("mousedown", opts));
         await new Promise(r => setTimeout(r, 50));
         el.dispatchEvent(new MouseEvent("mouseup", opts));
@@ -69,23 +74,27 @@
         log("MouseClick simulated", el);
     };
 
-    // Simulate a mouseover event
+    // Simulate a mouseover event.
     const simulateMouseOver = (el) => {
-        const opts = { view: window, bubbles: true, cancelable: true, buttons: 0 };
-        el[0].dispatchEvent(new MouseEvent("mouseover", opts));
-        log("MouseOver simulated", el[0]);
+        if (el && el[0]) {
+            const opts = { view: document.defaultView, bubbles: true, cancelable: true, buttons: 0 };
+            el[0].dispatchEvent(new MouseEvent("mouseover", opts));
+            log("MouseOver simulated", el[0]);
+        } else {
+            console.error("simulateMouseOver: element is null or undefined");
+        }
     };
 
-    // Click an element using jQuery trigger
+    // Click an element using jQuery trigger.
     const clickElement = (jNode) => {
         jNode.trigger("click");
         log("Element Clicked", jNode[0]);
     };
 
-    // Calculate and adjust the position of a menu element
+    // Calculate and adjust the position of a menu element.
     const moveElement = (jNode) => {
         let leftSubmenuCorrection = false;
-        // Handle special case for colorPicker and Highlight dialogs from submenu
+        // Handle special case for colorPicker and Highlight dialogs from submenu.
         if (jNode.attr('id') === "null_outer" || jNode.attr('id') === "highlight_clear_outer") {
             log(`Special element ID detected: '${jNode.attr('id')}'`);
             jNode = jNode.parent().parent().parent();
@@ -123,7 +132,7 @@
         }
     };
 
-    // Specific actions for text color and highlight manipulation
+    // Specific actions for text color and highlight manipulation.
     const textColorSpecific = () => {
         processEvernoteMenuElement(
             "#qa-FONTCOLOR_DROPDOWN",
@@ -169,29 +178,37 @@
         if (submenuExist.length === 0) {
             const overflowButtonIdentifier = "#qa-OVERFLOW_BTN > div > div";
             const moreSubmenuElement = $(overflowButtonIdentifier);
-            waitForKeyElements("#qa-ACTIONS_MODAL", moveElement, true);
-            simulateMouseClick(moreSubmenuElement[0]);
+            if (moreSubmenuElement.length > 0) {
+                waitForKeyElements("#qa-ACTIONS_MODAL", moveElement, true);
+                simulateMouseClick(moreSubmenuElement[0]);
+            } else {
+                console.error(`Overflow button element '${overflowButtonIdentifier}' not found.`);
+            }
         }
     };
 
-    // Generalized function to process Evernote menu elements
+    // Generalized function to process Evernote menu elements.
     const processEvernoteMenuElement = (elementIdentifier, waitForIdentifier, submenuIdentifier, submenuWaitForIdentifier, actionFunction) => {
         const overflowButtonIdentifier = "#qa-OVERFLOW_BTN > div > div";
         const element = $(elementIdentifier);
+        const moreSubmenuElement = $(overflowButtonIdentifier);
 
         if (!element[0]) {
-            log(`Element not available, clicking '${overflowButtonIdentifier}' button`);
-            const moreSubmenuElement = $(overflowButtonIdentifier);
-            simulateMouseClick(moreSubmenuElement[0]);
-            waitForKeyElements(submenuIdentifier, simulateMouseOver, true);
-            waitForKeyElements(submenuWaitForIdentifier, actionFunction, true);
+            log(`Element not available, clicking '${overflowButtonIdentifier}' button`, moreSubmenuElement[0]);
+            if (moreSubmenuElement.length > 0) {
+                simulateMouseClick(moreSubmenuElement[0]);
+                waitForKeyElements(submenuIdentifier, simulateMouseOver, true);
+                waitForKeyElements(submenuWaitForIdentifier, actionFunction, true);
+            } else {
+                console.error(`Element '${overflowButtonIdentifier}' not found.`);
+            }
         } else {
             simulateMouseClick(element[0]);
             waitForKeyElements(waitForIdentifier, actionFunction, true);
         }
     };
 
-    // Keyboard shortcut handler
+    // Keyboard shortcut handler.
     const onKeydown = (evt) => {
         const os = detectOS();
         const key = evt.key.toLowerCase();
@@ -219,7 +236,7 @@
         }
     };
 
-    // Replace an element and change font settings
+    // Replace an element and change font settings.
     const replaceElementAndChangeFont = (jNode) => {
         const currentDate = $("#qa-HOME_SUBTITLE");
         currentDate.css({
@@ -231,7 +248,7 @@
         }
     };
 
-    // Simple OS detection based on navigator.appVersion
+    // Simple OS detection based on navigator.appVersion.
     const detectOS = () => {
         const appVersion = navigator.appVersion;
         if (appVersion.indexOf("Win") !== -1) return "Windows";
@@ -241,7 +258,7 @@
         return "Unknown";
     };
 
-    // Initialize: Replace element and add keyboard listener
+    // Initialize: Replace element and add keyboard listener.
     waitForKeyElements("#qa-HOME_TITLE", replaceElementAndChangeFont);
     document.addEventListener('keydown', onKeydown, true);
 
