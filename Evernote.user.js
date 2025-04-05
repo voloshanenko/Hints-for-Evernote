@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         evernote_font_change
 // @namespace    http://tampermonkey.net/
-// @version      0.16
+// @version      0.17
 // @description  Evernote.com Date/Greeting replacement, font color change + CtrlQ shortcut for text color change
 // @author       Igor Voloshanenko
 // @match        https://www.evernote.com/client/*
@@ -201,7 +201,7 @@
             }else if(evt.ctrlKey && evt.keyCode == 81){
                 // Ctrl + Q
                 textColorSpecific();
-            }else if(evt.ctrlKey && evt.keyCode == 82){
+            }else if(evt.ctrlKey && evt.keyCode == 83){
                 // Ctrl + Shift + R
                 overflowSubmenu();
             }
@@ -215,7 +215,7 @@
             }else if(evt.ctrlKey && evt.keyCode == 81){
                 // Ctrl + Q
                 textColorSpecific();
-            }else if(evt.ctrlKey && evt.keyCode == 82){
+            }else if(evt.ctrlKey && evt.keyCode == 83){
                 // Ctrl + Shift + R
                 overflowSubmenu();
             }
