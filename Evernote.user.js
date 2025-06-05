@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         evernote_font_change
 // @namespace    http://tampermonkey.net/
-// @version      0.20
+// @version      0.21
 // @description  Evernote.com Date/Greeting replacement, font color change + keyboard shortcuts with improved error handling
 // @author       Igor Voloshanenko
 // @match        https://www.evernote.com/client/*
@@ -208,29 +208,52 @@
         }
     };
 
-    // Keyboard shortcut handler.
+    // Keyboard shortcut handler, layout-independent
     const onKeydown = (evt) => {
         const os = detectOS();
-        const key = evt.key.toLowerCase();
+        const code = evt.code;       // "KeyQ", "KeyW", "KeyE", "KeyG", etc.
+        const ctrl = evt.ctrlKey;
+        const shift = evt.shiftKey;
 
+        // Only respond when Ctrl is held (regardless of layout)
+        if (!ctrl) return;
+
+        // MacOS branch
         if (os === "MacOS") {
-            if (evt.ctrlKey && evt.shiftKey && key === 'q') {
+            // Ctrl+Shift+Q  → textColorPicker
+            if (shift && code === "KeyQ") {
                 textColorPicker();
-            } else if (evt.ctrlKey && evt.shiftKey && key === 'w') {
+            }
+            // Ctrl+Shift+W  → textHighlightPicker
+            if (shift && code === "KeyW") {
                 textHighlightPicker();
-            } else if (evt.ctrlKey && key === 'q') {
+            }
+            // Ctrl+Q        → textColorSpecific
+            if (!shift && code === "KeyQ") {
                 textColorSpecific();
-            } else if (evt.ctrlKey && key === 'g') {
+            }
+            // Ctrl+G        → overflowSubmenu
+            if (!shift && code === "KeyG") {
                 overflowSubmenu();
             }
-        } else if (os === "Windows") {
-            if (evt.ctrlKey && evt.shiftKey && key === 'q') {
+        }
+
+        // Windows branch
+        if (os === "Windows") {
+            // Ctrl+Shift+Q  → textColorPicker
+            if (shift && code === "KeyQ") {
                 textColorPicker();
-            } else if (evt.ctrlKey && evt.shiftKey && key === 'e') {
+            }
+            // Ctrl+Shift+E  → textHighlightPicker (note: "KeyE" here)
+            if (shift && code === "KeyE") {
                 textHighlightPicker();
-            } else if (evt.ctrlKey && key === 'q') {
+            }
+            // Ctrl+Q        → textColorSpecific
+            if (!shift && code === "KeyQ") {
                 textColorSpecific();
-            } else if (evt.ctrlKey && key === 'g') {
+            }
+            // Ctrl+G        → overflowSubmenu
+            if (!shift && code === "KeyG") {
                 overflowSubmenu();
             }
         }
