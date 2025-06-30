@@ -68,7 +68,7 @@
 
     // Calculate relative position of an element.
     const getRelativePos = obj => {
-        let pos = { offsetLeft: 0, offsetTop: 0 };
+        const pos = { offsetLeft: 0, offsetTop: 0 };
         while (obj) {
             pos.offsetLeft += obj.offsetLeft;
             pos.offsetTop += obj.offsetTop;
@@ -310,18 +310,18 @@
                     log(`Executing ${action} on ${os}`);
 
                     switch (action) {
-                        case 'textColorPicker':
-                            textColorPicker();
-                            break;
-                        case 'textColorSpecific':
-                            textColorSpecific();
-                            break;
-                        case 'overflowSubmenu':
-                            overflowSubmenu();
-                            break;
-                        case 'textHighlightPicker':
-                            textHighlightPicker();
-                            break;
+                    case 'textColorPicker':
+                        textColorPicker();
+                        break;
+                    case 'textColorSpecific':
+                        textColorSpecific();
+                        break;
+                    case 'overflowSubmenu':
+                        overflowSubmenu();
+                        break;
+                    case 'textHighlightPicker':
+                        textHighlightPicker();
+                        break;
                     }
                 }
             });
