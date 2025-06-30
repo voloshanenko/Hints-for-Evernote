@@ -1,27 +1,59 @@
 // ==UserScript==
-// @name         evernote_font_change
+// @name         Hints for Evernote
 // @namespace    http://tampermonkey.net/
-// @version      0.21
-// @description  Evernote.com Date/Greeting replacement, font color change + keyboard shortcuts with improved error handling
+// @version      0.22
+// @description  Enhanced Evernote experience with improved keyboard shortcuts, text formatting tools, and UI enhancements
 // @author       Igor Voloshanenko
 // @match        https://www.evernote.com/client/*
 // @icon         https://www.google.com/s2/favicons?domain=evernote.com
 // @homepageURL  https://github.com/voloshanenko/Hints-for-Evernote
 // @updateURL    https://github.com/voloshanenko/Hints-for-Evernote/raw/main/Evernote.user.js
 // @downloadURL  https://github.com/voloshanenko/Hints-for-Evernote/raw/main/Evernote.user.js
-// @require      https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js
+// @require      https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js
 // @require      https://github.com/voloshanenko/Hints-for-Evernote/raw/main/waitForKeyElements.js
 // @grant        GM_addStyle
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_notification
 // ==/UserScript==
 
 (() => {
     'use strict';
 
-    const verbose = true;
+    // Configuration
+    const CONFIG = {
+        verbose: GM_getValue('verbose', true),
+        customColors: {
+            primary: GM_getValue('primaryColor', 'rgb(252, 18, 51)'),
+            highlight: GM_getValue('highlightColor', 'green')
+        },
+        delays: {
+            mouseClick: 50,
+            waitInterval: 10
+        }
+    };
 
+    // Utility functions
     const log = (message, data = null) => {
-        if (verbose) {
-            console.log(message, data);
+        if (CONFIG.verbose) {
+            console.log(`[Hints for Evernote] ${message}`, data);
+        }
+    };
+
+    const showNotification = (text, title = 'Hints for Evernote') => {
+        if (GM_notification) {
+            GM_notification(text, title, null, () => {});
+        }
+    };
+
+    // Error handling wrapper
+    const safeExecute = (fn, context = 'Unknown') => {
+        try {
+            return fn();
+        } catch (error) {
+            console.error(`[Hints for Evernote] Error in ${context}:`, error);
+            showNotification(`Error in ${context}: ${error.message}`);
+            return null;
         }
     };
 
@@ -59,30 +91,49 @@
         return editorElem.getBoundingClientRect();
     };
 
-    // Simulate a mouse click on an element.
+    // Simulate a mouse click on an element with improved error handling
     const simulateMouseClick = async (el) => {
-        if (!el) {
-            console.error("simulateMouseClick: element is null or undefined");
-            return;
-        }
-        // Use document.defaultView to ensure a valid Window object.
-        const opts = { view: document.defaultView, bubbles: true, cancelable: true, buttons: 1 };
-        el.dispatchEvent(new MouseEvent("mousedown", opts));
-        await new Promise(r => setTimeout(r, 50));
-        el.dispatchEvent(new MouseEvent("mouseup", opts));
-        el.dispatchEvent(new MouseEvent("click", opts));
-        log("MouseClick simulated", el);
+        return safeExecute(async () => {
+            if (!el) {
+                throw new Error("Element is null or undefined");
+            }
+            
+            const opts = { 
+                view: document.defaultView, 
+                bubbles: true, 
+                cancelable: true, 
+                buttons: 1 
+            };
+            
+            el.dispatchEvent(new MouseEvent("mousedown", opts));
+            await new Promise(r => setTimeout(r, CONFIG.delays.mouseClick));
+            el.dispatchEvent(new MouseEvent("mouseup", opts));
+            el.dispatchEvent(new MouseEvent("click", opts));
+            
+            log("MouseClick simulated", el);
+            return true;
+        }, 'simulateMouseClick');
     };
 
-    // Simulate a mouseover event.
+    // Simulate a mouseover event with improved error handling
     const simulateMouseOver = (el) => {
-        if (el && el[0]) {
-            const opts = { view: document.defaultView, bubbles: true, cancelable: true, buttons: 0 };
-            el[0].dispatchEvent(new MouseEvent("mouseover", opts));
-            log("MouseOver simulated", el[0]);
-        } else {
-            console.error("simulateMouseOver: element is null or undefined");
-        }
+        return safeExecute(() => {
+            const element = el && el[0] ? el[0] : el;
+            if (!element) {
+                throw new Error("Element is null or undefined");
+            }
+            
+            const opts = { 
+                view: document.defaultView, 
+                bubbles: true, 
+                cancelable: true, 
+                buttons: 0 
+            };
+            
+            element.dispatchEvent(new MouseEvent("mouseover", opts));
+            log("MouseOver simulated", element);
+            return true;
+        }, 'simulateMouseOver');
     };
 
     // Click an element using jQuery trigger.
@@ -208,55 +259,82 @@
         }
     };
 
-    // Keyboard shortcut handler, layout-independent
+    // Keyboard shortcut handler with improved layout independence and help system
     const onKeydown = (evt) => {
+        return safeExecute(() => {
+            const os = detectOS();
+            const code = evt.code;
+            const ctrl = evt.ctrlKey;
+            const shift = evt.shiftKey;
+            const alt = evt.altKey;
+
+            // Only respond when Ctrl is held (regardless of layout)
+            if (!ctrl) return;
+
+            // Help system: Ctrl+Alt+H
+            if (alt && code === "KeyH") {
+                showHelp();
+                evt.preventDefault();
+                return;
+            }
+
+            // Cross-platform shortcuts
+            const shortcuts = {
+                // Text color picker: Ctrl+Shift+Q
+                textColorPicker: shift && code === "KeyQ",
+                // Text color specific: Ctrl+Q
+                textColorSpecific: !shift && code === "KeyQ",
+                // Overflow submenu: Ctrl+G
+                overflowSubmenu: !shift && code === "KeyG",
+                // Text highlight picker: Ctrl+Shift+W (macOS) or Ctrl+Shift+E (Windows)
+                textHighlightPicker: shift && (
+                    (os === "MacOS" && code === "KeyW") || 
+                    (os === "Windows" && code === "KeyE")
+                )
+            };
+
+            // Execute the appropriate action
+            Object.entries(shortcuts).forEach(([action, condition]) => {
+                if (condition) {
+                    evt.preventDefault();
+                    log(`Executing ${action} on ${os}`);
+                    
+                    switch(action) {
+                        case 'textColorPicker':
+                            textColorPicker();
+                            break;
+                        case 'textColorSpecific':
+                            textColorSpecific();
+                            break;
+                        case 'overflowSubmenu':
+                            overflowSubmenu();
+                            break;
+                        case 'textHighlightPicker':
+                            textHighlightPicker();
+                            break;
+                    }
+                }
+            });
+        }, 'onKeydown');
+    };
+
+    // Help system
+    const showHelp = () => {
         const os = detectOS();
-        const code = evt.code;       // "KeyQ", "KeyW", "KeyE", "KeyG", etc.
-        const ctrl = evt.ctrlKey;
-        const shift = evt.shiftKey;
+        const helpText = `
+Keyboard Shortcuts for Evernote Enhancement:
 
-        // Only respond when Ctrl is held (regardless of layout)
-        if (!ctrl) return;
+• Ctrl+Q: Apply red text color
+• Ctrl+Shift+Q: Open text color picker
+• Ctrl+G: Open overflow submenu
+• Ctrl+Shift+${os === 'MacOS' ? 'W' : 'E'}: Open highlight picker
+• Ctrl+Alt+H: Show this help
 
-        // MacOS branch
-        if (os === "MacOS") {
-            // Ctrl+Shift+Q  → textColorPicker
-            if (shift && code === "KeyQ") {
-                textColorPicker();
-            }
-            // Ctrl+Shift+W  → textHighlightPicker
-            if (shift && code === "KeyW") {
-                textHighlightPicker();
-            }
-            // Ctrl+Q        → textColorSpecific
-            if (!shift && code === "KeyQ") {
-                textColorSpecific();
-            }
-            // Ctrl+G        → overflowSubmenu
-            if (!shift && code === "KeyG") {
-                overflowSubmenu();
-            }
-        }
-
-        // Windows branch
-        if (os === "Windows") {
-            // Ctrl+Shift+Q  → textColorPicker
-            if (shift && code === "KeyQ") {
-                textColorPicker();
-            }
-            // Ctrl+Shift+E  → textHighlightPicker (note: "KeyE" here)
-            if (shift && code === "KeyE") {
-                textHighlightPicker();
-            }
-            // Ctrl+Q        → textColorSpecific
-            if (!shift && code === "KeyQ") {
-                textColorSpecific();
-            }
-            // Ctrl+G        → overflowSubmenu
-            if (!shift && code === "KeyG") {
-                overflowSubmenu();
-            }
-        }
+Current OS: ${os}
+        `.trim();
+        
+        showNotification(helpText, 'Keyboard Shortcuts Help');
+        console.log(`[Hints for Evernote] ${helpText}`);
     };
 
     // Replace an element and change font settings.
@@ -271,18 +349,73 @@
         }
     };
 
-    // Simple OS detection based on navigator.appVersion.
+    // Enhanced OS detection with more reliable methods
     const detectOS = () => {
+        const platform = navigator.platform.toLowerCase();
+        const userAgent = navigator.userAgent.toLowerCase();
+        
+        if (platform.includes('mac') || userAgent.includes('mac')) return "MacOS";
+        if (platform.includes('win') || userAgent.includes('win')) return "Windows";
+        if (platform.includes('linux') || userAgent.includes('linux')) return "Linux";
+        if (platform.includes('freebsd') || userAgent.includes('freebsd')) return "FreeBSD";
+        
+        // Fallback to original method
         const appVersion = navigator.appVersion;
-        if (appVersion.indexOf("Win") !== -1) return "Windows";
-        if (appVersion.indexOf("Mac") !== -1) return "MacOS";
-        if (appVersion.indexOf("X11") !== -1) return "UNIX";
-        if (appVersion.indexOf("Linux") !== -1) return "Linux";
+        if (appVersion.includes("Win")) return "Windows";
+        if (appVersion.includes("Mac")) return "MacOS";
+        if (appVersion.includes("X11")) return "UNIX";
+        if (appVersion.includes("Linux")) return "Linux";
+        
         return "Unknown";
     };
 
-    // Initialize: Replace element and add keyboard listener.
-    waitForKeyElements("#qa-HOME_TITLE", replaceElementAndChangeFont);
-    document.addEventListener('keydown', onKeydown, true);
+    // Add custom styles for better UX
+    const addCustomStyles = () => {
+        GM_addStyle(`
+            /* Enhanced Evernote styling */
+            .hints-evernote-notification {
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #4CAF50;
+                color: white;
+                padding: 10px 15px;
+                border-radius: 5px;
+                z-index: 10000;
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                max-width: 300px;
+            }
+            
+            .hints-evernote-help {
+                background: #2196F3 !important;
+                white-space: pre-line;
+                font-size: 12px;
+                line-height: 1.4;
+            }
+        `);
+    };
+
+    // Initialize the script with proper error handling
+    const initialize = () => {
+        return safeExecute(() => {
+            log("Initializing Hints for Evernote script");
+            
+            // Add custom styles
+            addCustomStyles();
+            
+            // Replace element and add keyboard listener
+            waitForKeyElements("#qa-HOME_TITLE", replaceElementAndChangeFont);
+            document.addEventListener('keydown', onKeydown, true);
+            
+            // Show initialization notification
+            showNotification("Hints for Evernote loaded successfully! Press Ctrl+Alt+H for help.");
+            
+            log("Script initialized successfully");
+        }, 'initialize');
+    };
+
+    // Start the script
+    initialize();
 
 })();

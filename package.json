@@ -1,0 +1,36 @@
+{
+  "name": "hints-for-evernote",
+  "version": "0.22.0",
+  "description": "A powerful Tampermonkey userscript that enhances your Evernote experience with keyboard shortcuts, improved text formatting tools, and UI enhancements.",
+  "main": "Evernote.user.js",
+  "scripts": {
+    "lint": "eslint *.js",
+    "format": "prettier --write *.js *.md",
+    "validate": "node scripts/validate.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/voloshanenko/Hints-for-Evernote.git"
+  },
+  "keywords": [
+    "evernote",
+    "tampermonkey",
+    "userscript",
+    "keyboard-shortcuts",
+    "productivity",
+    "browser-extension"
+  ],
+  "author": "Igor Voloshanenko",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/voloshanenko/Hints-for-Evernote/issues"
+  },
+  "homepage": "https://github.com/voloshanenko/Hints-for-Evernote#readme",
+  "devDependencies": {
+    "eslint": "^8.0.0",
+    "prettier": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
