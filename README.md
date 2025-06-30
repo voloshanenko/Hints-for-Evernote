@@ -8,6 +8,7 @@ keyboard shortcuts, improved text formatting tools, and UI enhancements.
 ### Keyboard Shortcuts
 
 - **Ctrl+Q**: Apply red text color to selected text
+- **Ctrl+E**: Apply green highlight to selected text
 - **Ctrl+Shift+Q**: Open text color picker
 - **Ctrl+G**: Open overflow submenu for additional tools
 - **Ctrl+Shift+W** (macOS) / **Ctrl+Shift+E** (Windows): Open text highlight

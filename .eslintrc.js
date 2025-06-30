@@ -24,8 +24,8 @@ module.exports = {
         $: 'readonly',
         jQuery: 'readonly',
         
-        // Custom utility function
-        waitForKeyElements: 'readonly'
+        // Custom utility function (loaded via @require)
+        waitForKeyElements: 'writable'
     },
     rules: {
         // Allow console.log for userscripts

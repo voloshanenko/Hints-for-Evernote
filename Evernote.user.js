@@ -295,6 +295,8 @@
                 textColorPicker: shift && code === 'KeyQ',
                 // Text color specific: Ctrl+Q
                 textColorSpecific: !shift && code === 'KeyQ',
+                // Text highlight specific: Ctrl+E (direct green highlight)
+                textHighlightSpecific: !shift && code === 'KeyE',
                 // Overflow submenu: Ctrl+G
                 overflowSubmenu: !shift && code === 'KeyG',
                 // Text highlight picker: Ctrl+Shift+W (macOS) or Ctrl+Shift+E (Windows)
@@ -316,6 +318,9 @@
                     case 'textColorSpecific':
                         textColorSpecific();
                         break;
+                    case 'textHighlightSpecific':
+                        textHighlightSpecific();
+                        break;
                     case 'overflowSubmenu':
                         overflowSubmenu();
                         break;
@@ -335,6 +340,7 @@
 Keyboard Shortcuts for Evernote Enhancement:
 
 • Ctrl+Q: Apply red text color
+• Ctrl+E: Apply green highlight
 • Ctrl+Shift+Q: Open text color picker
 • Ctrl+G: Open overflow submenu
 • Ctrl+Shift+${os === 'MacOS' ? 'W' : 'E'}: Open highlight picker

@@ -11,6 +11,7 @@
      Enhanced version with improved error handling and performance.
 */
 
+/* eslint-disable no-redeclare, no-unused-vars */
 const waitForKeyElements = (selectorTxt, actionFunction, bWaitOnce = false, iframeSelector) => {
     try {
         let targetNodes;

@@ -116,6 +116,7 @@ jobs:
           
           ### 🎯 Keyboard Shortcuts
           - **Ctrl+Q**: Apply red text color
+          - **Ctrl+E**: Apply green highlight
           - **Ctrl+Shift+Q**: Open text color picker
           - **Ctrl+G**: Open overflow submenu
           - **Ctrl+Shift+W** (macOS) / **Ctrl+Shift+E** (Windows): Highlight picker
