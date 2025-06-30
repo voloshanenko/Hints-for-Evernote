@@ -41,8 +41,8 @@ module.exports = {
         'no-var': 'error',
         'prefer-const': 'warn',
         
-        // Code style
-        'indent': ['error', 4],
+        // Code style - compatible with Prettier
+        'indent': ['error', 4, { 'SwitchCase': 1 }],
         'quotes': ['error', 'single', { 'allowTemplateLiterals': true }],
         'semi': ['error', 'always'],
         

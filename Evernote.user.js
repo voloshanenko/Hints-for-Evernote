@@ -312,21 +312,21 @@
                     log(`Executing ${action} on ${os}`);
 
                     switch (action) {
-                    case 'textColorPicker':
-                        textColorPicker();
-                        break;
-                    case 'textColorSpecific':
-                        textColorSpecific();
-                        break;
-                    case 'textHighlightSpecific':
-                        textHighlightSpecific();
-                        break;
-                    case 'overflowSubmenu':
-                        overflowSubmenu();
-                        break;
-                    case 'textHighlightPicker':
-                        textHighlightPicker();
-                        break;
+                        case 'textColorPicker':
+                            textColorPicker();
+                            break;
+                        case 'textColorSpecific':
+                            textColorSpecific();
+                            break;
+                        case 'textHighlightSpecific':
+                            textHighlightSpecific();
+                            break;
+                        case 'overflowSubmenu':
+                            overflowSubmenu();
+                            break;
+                        case 'textHighlightPicker':
+                            textHighlightPicker();
+                            break;
                     }
                 }
             });
