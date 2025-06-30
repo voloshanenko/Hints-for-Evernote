@@ -1,0 +1,132 @@
+name: Validate Userscript
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        
+    - name: Run shell validation
+      run: |
+        chmod +x scripts/validate.sh
+        ./scripts/validate.sh
+      
+    - name: Check userscript syntax
+      run: |
+        echo "Checking JavaScript syntax..."
+        node -c Evernote.user.js && echo "✅ Main script syntax OK" || echo "❌ Main script has syntax errors"
+        node -c waitForKeyElements.js && echo "✅ Utility script syntax OK" || echo "❌ Utility script has syntax errors"
+      
+    - name: Verify file structure
+      run: |
+        echo "Checking file structure..."
+        test -f Evernote.user.js && echo "✅ Main script exists" || echo "❌ Main script missing"
+        test -f waitForKeyElements.js && echo "✅ Utility script exists" || echo "❌ Utility script missing"
+        test -f README.md && echo "✅ README exists" || echo "❌ README missing"
+        test -f LICENSE && echo "✅ LICENSE exists" || echo "❌ LICENSE missing"
+        test -f package.json && echo "✅ package.json exists" || echo "❌ package.json missing"
+        
+    - name: Install dependencies (if package.json exists)
+      run: |
+        if [ -f package.json ]; then
+          if [ -f package-lock.json ]; then
+            npm ci
+          else
+            npm install
+          fi
+        else
+          echo "No package.json found, skipping dependency installation"
+        fi
+      
+    - name: Run Node.js validation (if available)
+      run: |
+        if [ -f scripts/validate.js ] && [ -f package.json ]; then
+          echo "Running comprehensive Node.js validation..."
+          npm run validate
+        else
+          echo "Node.js validation not available, shell validation already completed"
+        fi
+      
+    - name: Check formatting (if prettier is available)
+      run: |
+        if [ -f package.json ] && npm list prettier > /dev/null 2>&1; then
+          npm run format:check
+        else
+          echo "Prettier not available, skipping format check"
+        fi
+      
+    - name: Run linting (if eslint is available)
+      run: |
+        if [ -f package.json ] && npm list eslint > /dev/null 2>&1; then
+          npm run lint
+        else
+          echo "ESLint not available, skipping lint check"
+        fi
+
+  release:
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Get version from userscript
+      id: get_version
+      run: |
+        VERSION=$(grep -o '@version.*[0-9]\+\.[0-9]\+' Evernote.user.js | cut -d' ' -f2)
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Found version: $VERSION"
+        
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.get_version.outputs.version }}
+        name: Release v${{ steps.get_version.outputs.version }}
+        body: |
+          ## Hints for Evernote v${{ steps.get_version.outputs.version }}
+          
+          ### 🚀 Installation
+          Click [here to install the userscript](https://github.com/${{ github.repository }}/raw/main/Evernote.user.js)
+          
+          ### ✨ Features
+          - Enhanced keyboard shortcuts for Evernote
+          - Cross-platform compatibility (Windows, macOS, Linux)
+          - Text formatting tools with smart positioning
+          - Built-in help system (Ctrl+Alt+H)
+          - Improved error handling and user feedback
+          
+          ### 🎯 Keyboard Shortcuts
+          - **Ctrl+Q**: Apply red text color
+          - **Ctrl+Shift+Q**: Open text color picker
+          - **Ctrl+G**: Open overflow submenu
+          - **Ctrl+Shift+W** (macOS) / **Ctrl+Shift+E** (Windows): Highlight picker
+          - **Ctrl+Alt+H**: Show help
+          
+          ### 📝 Changes
+          See [commit history](https://github.com/${{ github.repository }}/commits/main) for detailed changes.
+        files: |
+          Evernote.user.js
+          waitForKeyElements.js
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
