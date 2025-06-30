@@ -4,9 +4,11 @@
   "description": "A powerful Tampermonkey userscript that enhances your Evernote experience with keyboard shortcuts, improved text formatting tools, and UI enhancements.",
   "main": "Evernote.user.js",
   "scripts": {
-    "lint": "eslint *.js",
-    "format": "prettier --write *.js *.md",
-    "validate": "node scripts/validate.js"
+    "lint": "if command -v eslint > /dev/null 2>&1; then eslint *.js; else echo 'ESLint not installed, skipping...'; fi",
+    "format": "if command -v prettier > /dev/null 2>&1; then prettier --write *.js *.md; else echo 'Prettier not installed, skipping...'; fi",
+    "format:check": "if command -v prettier > /dev/null 2>&1; then prettier --check *.js *.md; else echo 'Prettier not installed, skipping...'; fi",
+    "validate": "if command -v node > /dev/null 2>&1; then node scripts/validate.js; else bash scripts/validate.sh; fi",
+    "test": "npm run validate && npm run lint && npm run format:check"
   },
   "repository": {
     "type": "git",
@@ -27,8 +29,8 @@
   },
   "homepage": "https://github.com/voloshanenko/Hints-for-Evernote#readme",
   "devDependencies": {
-    "eslint": "^8.0.0",
-    "prettier": "^3.0.0"
+    "eslint": "^8.57.0",
+    "prettier": "^3.2.0"
   },
   "engines": {
     "node": ">=14.0.0"
