@@ -30,7 +30,7 @@
   "homepage": "https://github.com/voloshanenko/Hints-for-Evernote#readme",
   "devDependencies": {
     "eslint": "^8.57.0",
-    "prettier": "^3.2.0"
+    "prettier": "^3.6.2"
   },
   "engines": {
     "node": ">=14.0.0"

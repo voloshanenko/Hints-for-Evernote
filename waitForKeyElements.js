@@ -14,8 +14,8 @@
 const waitForKeyElements = (selectorTxt, actionFunction, bWaitOnce = false, iframeSelector) => {
     try {
         let targetNodes;
-        
-        if (typeof iframeSelector === "undefined") {
+
+        if (typeof iframeSelector === 'undefined') {
             targetNodes = $(selectorTxt);
         } else {
             const iframe = $(iframeSelector);
@@ -27,7 +27,7 @@ const waitForKeyElements = (selectorTxt, actionFunction, bWaitOnce = false, ifra
         }
 
         if (targetNodes && targetNodes.length > 0) {
-            targetNodes.each(function() {
+            targetNodes.each(function () {
                 try {
                     const jThis = $(this);
                     if (!jThis.data('alreadyFound')) {
@@ -43,7 +43,7 @@ const waitForKeyElements = (selectorTxt, actionFunction, bWaitOnce = false, ifra
         }
 
         const controlObj = waitForKeyElements.controlObj || {};
-        const controlKey = selectorTxt.replace(/[^\w]/g, "_");
+        const controlKey = selectorTxt.replace(/[^\w]/g, '_');
         let timeControl = controlObj[controlKey];
 
         if (targetNodes && targetNodes.length > 0 && bWaitOnce && timeControl) {
@@ -55,7 +55,7 @@ const waitForKeyElements = (selectorTxt, actionFunction, bWaitOnce = false, ifra
             }, 10);
             controlObj[controlKey] = timeControl;
         }
-        
+
         waitForKeyElements.controlObj = controlObj;
     } catch (error) {
         console.error('[waitForKeyElements] Critical error:', error);
